@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PNZ Post Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --border2: #333;
+    --text: #e8e8e8;
+    --muted: #888;
+    --accent: #c8ff00;
+    --accent-dim: #8aad00;
+    --danger: #ff4444;
+    --success: #22c55e;
+    --radius: 8px;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; }
+  header { border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); z-index: 10; }
+  .logo { font-family: var(--mono); font-size: 13px; letter-spacing: .12em; color: var(--accent); text-transform: uppercase; }
+  .api-status { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); transition: background .3s; }
+  .dot.active { background: var(--accent); }
+  .layout { display: grid; grid-template-columns: 380px 1fr; min-height: calc(100vh - 53px); }
+  .panel-left { border-right: 1px solid var(--border); padding: 1.5rem; overflow-y: auto; max-height: calc(100vh - 53px); position: sticky; top: 53px; }
+  .panel-right { padding: 1.5rem; overflow-y: auto; }
+  .section-label { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; margin-bottom: .75rem; margin-top: 1.5rem; }
+  .section-label:first-child { margin-top: 0; }
+  label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 500; letter-spacing: .04em; }
+  input, select, textarea { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font); font-size: 13px; padding: 8px 10px; outline: none; transition: border-color .15s; appearance: none; -webkit-appearance: none; }
+  input:focus, select:focus, textarea:focus { border-color: var(--border2); }
+  input::placeholder, textarea::placeholder { color: #444; }
+  textarea { resize: vertical; line-height: 1.55; }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; cursor: pointer; }
+  .field { margin-bottom: 10px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .url-row { display: flex; gap: 8px; }
+  .url-row input { flex: 1; font-family: var(--mono); font-size: 12px; }
+  .btn-fetch { padding: 8px 14px; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); color: var(--muted); font-family: var(--mono); font-size: 11px; letter-spacing: .06em; cursor: pointer; white-space: nowrap; transition: all .15s; }
+  .btn-fetch:hover { color: var(--text); border-color: #555; }
+  .fetch-preview { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.6; display: none; }
+  .fetch-preview strong { color: var(--text); font-weight: 500; }
+  .btn-generate { width: 100%; padding: 11px; background: var(--accent); border: none; border-radius: var(--radius); color: #0d0d0d; font-family: var(--mono); font-size: 12px; letter-spacing: .1em; font-weight: 500; cursor: pointer; text-transform: uppercase; margin-top: 1.25rem; transition: opacity .15s; }
+  .btn-generate:hover { opacity: .88; }
+  .btn-generate:disabled { opacity: .35; cursor: not-allowed; }
+  .status-line { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 8px; min-height: 16px; letter-spacing: .04em; }
+  .status-line.err { color: var(--danger); }
+  .status-line.ok { color: var(--success); }
+  .config-toggle { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; cursor: pointer; background: none; border: none; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
+  .config-toggle:hover { color: var(--text); }
+  .config-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-top: 8px; display: none; }
+  .config-panel.open { display: block; }
+  .provider-row { display: grid; grid-template-columns: 80px 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .provider-label { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .results-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); font-family: var(--mono); font-size: 12px; letter-spacing: .08em; flex-direction: column; gap: 8px; min-height: 300px; }
+  .results-empty .arrow { font-size: 24px; color: var(--border2); }
+  .platform-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1rem; overflow: hidden; }
+  .platform-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  .platform-name { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .btn-copy { padding: 4px 10px; background: transparent; border: 1px solid var(--border2); border-radius: 4px; color: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: .06em; cursor: pointer; transition: all .15s; }
+  .btn-copy:hover { color: var(--accent); border-color: var(--accent); }
+  .btn-copy.copied { color: var(--success); border-color: var(--success); }
+  .caption-body { padding: 14px; font-size: 13px; line-height: 1.75; color: var(--text); white-space: pre-wrap; }
+  .hashtag-body { padding: 0 14px 14px; font-size: 12px; color: var(--accent-dim); font-family: var(--mono); line-height: 1.8; }
+  .spinner { display: inline-block; width: 10px; height: 10px; border: 1.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 768px) { .layout { grid-template-columns: 1fr; } .panel-left { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); } header { padding: 1rem; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">PNZ / Post Generator</span>
+  <div class="api-status">
+    <span id="dot-groq" class="dot" title="Groq"></span>G
+    <span id="dot-mistral" class="dot" title="Mistral"></span>M
+    <span id="dot-gemini" class="dot" title="Gemini"></span>Ge
+    <span id="model-used" style="margin-left:4px;font-size:10px;color:#555;"></span>
+  </div>
+</header>
+<div class="layout">
+  <div class="panel-left">
+    <div class="section-label">API Keys</div>
+    <button class="config-toggle" onclick="toggleConfig()">Configure keys</button>
+    <div id="config-panel" class="config-panel">
+      <div class="provider-row">
+        <span class="provider-label">Groq</span>
+        <input type="password" id="key-groq" placeholder="gsk_..." autocomplete="off" oninput="saveKeys()" />
+      </div>
+      <div class="provider-row">
+        <span class="provider-label">Mistral</span>
+        <input type="password" id="key-mistral" placeholder="..." autocomplete="off" oninput="saveKeys()" />
+      </div>
+      <div class="provider-row">
+        <span class="provider-label">Gemini</span>
+        <input type="password" id="key-gemini" placeholder="AIza..." autocomplete="off" oninput="saveKeys()" />
+      </div>
+      <div style="font-size:11px;color:#555;margin-top:8px;font-family:var(--mono);">Keys stored in your browser only.</div>
+    </div>
+
+    <div class="section-label" style="margin-top:1.25rem;">Product URL</div>
+    <div class="field">
+      <div class="url-row">
+        <input type="url" id="url-input" placeholder="https://primesandzooms.com/..." />
+        <button class="btn-fetch" onclick="fetchURL()" id="fetch-btn">Fetch</button>
+      </div>
+      <div id="fetch-status" class="status-line"></div>
+      <div id="fetch-preview" class="fetch-preview"></div>
+    </div>
+
+    <div class="section-label">Product details</div>
+    <div class="row field">
+      <div><label>Product name</label><input type="text" id="product-name" placeholder="Godox V100S" /></div>
+      <div><label>Day rate (INR)</label><input type="number" id="price" placeholder="1200" /></div>
+    </div>
+    <div class="field">
+      <label>Key features / specs (one per line)</label>
+      <textarea id="key-features" rows="5" placeholder="TTL round-head flash&#10;200Ws output&#10;Sony E-mount compatible&#10;Built-in battery"></textarea>
+    </div>
+
+    <div class="section-label">Post settings</div>
+    <div class="row field">
+      <div><label>Content type</label>
+        <select id="content-type"><option>Promotional</option><option>Educational</option><option>Announcement</option><option>Informative</option></select>
+      </div>
+      <div><label>Tone</label>
+        <select id="tone"><option>Informative</option><option>Bold</option><option>Friendly</option><option>Professional</option></select>
+      </div>
+    </div>
+    <div class="row field">
+      <div><label>Hook style</label>
+        <select id="hook"><option>Statement</option><option>Question</option><option>CTA-led</option><option>Data / spec-led</option><option>Story</option></select>
+      </div>
+      <div><label>Call to action</label>
+        <select id="cta"><option>WhatsApp</option><option>Call</option><option>Link in bio</option><option>Product page</option></select>
+      </div>
+    </div>
+
+    <button class="btn-generate" id="gen-btn" onclick="generate()">Generate all platforms</button>
+    <div id="gen-status" class="status-line"></div>
+  </div>
+
+  <div class="panel-right" id="panel-right">
+    <div class="results-empty" id="results-empty">
+      <span class="arrow">&#8592;</span>
+      <span>Fill in product details and generate</span>
+    </div>
+    <div id="results"></div>
+  </div>
+</div>
+
+<script>
+function loadKeys() {
+  document.getElementById('key-groq').value    = localStorage.getItem('pnz_groq') || '';
+  document.getElementById('key-mistral').value = localStorage.getItem('pnz_mistral') || '';
+  document.getElementById('key-gemini').value  = localStorage.getItem('pnz_gemini') || '';
+  updateDots();
+}
+function saveKeys() {
+  localStorage.setItem('pnz_groq',    document.getElementById('key-groq').value.trim());
+  localStorage.setItem('pnz_mistral', document.getElementById('key-mistral').value.trim());
+  localStorage.setItem('pnz_gemini',  document.getElementById('key-gemini').value.trim());
+  updateDots();
+}
+function updateDots() {
+  ['groq','mistral','gemini'].forEach(p => {
+    document.getElementById('dot-'+p).className = 'dot ' + (localStorage.getItem('pnz_'+p) ? 'active' : '');
+  });
+}
+function toggleConfig() {
+  document.getElementById('config-panel').classList.toggle('open');
+}
+async function fetchURL() {
+  const url = document.getElementById('url-input').value.trim();
+  if (!url) return;
+  const statusEl = document.getElementById('fetch-status');
+  const previewEl = document.getElementById('fetch-preview');
+  const btn = document.getElementById('fetch-btn');
+  btn.disabled = true; btn.textContent = '...';
+  statusEl.className = 'status-line';
+  statusEl.innerHTML = '<span class="spinner"></span>Fetching...';
+  previewEl.style.display = 'none';
+  const prompt = `Extract product information from this URL and return ONLY a JSON object with no other text:\nURL: ${url}\n\n{"product_name":"","price_per_day":"","key_features":[],"description":"","category":""}\n\n- price_per_day: rental day rate in INR as number string, empty if not found\n- key_features: array of 4-6 key specs as short strings\n- description: 1-2 sentences\n- If URL inaccessible, infer from URL path`;
+  try {
+    const result = await callAI(prompt, 400);
+    const clean = result.text.replace(/\`\`\`json|\`\`\`/g, '').trim();
+    const parsed = JSON.parse(clean);
+    if (parsed.product_name) document.getElementById('product-name').value = parsed.product_name;
+    if (parsed.price_per_day) document.getElementById('price').value = parsed.price_per_day.replace(/[^\d]/g, '');
+    if (parsed.key_features?.length) document.getElementById('key-features').value = parsed.key_features.join('\n');
+    previewEl.style.display = 'block';
+    previewEl.innerHTML = '<strong>' + esc(parsed.product_name || 'Product') + '</strong><br>' + esc(parsed.description || '');
+    statusEl.className = 'status-line ok';
+    statusEl.textContent = 'Loaded via ' + result.provider;
+  } catch(e) {
+    statusEl.className = 'status-line err';
+    statusEl.textContent = 'Fetch failed — fill details manually';
+  }
+  btn.disabled = false; btn.textContent = 'Fetch';
+}
+async function generate() {
+  const name     = document.getElementById('product-name').value.trim();
+  const price    = document.getElementById('price').value.trim();
+  const features = document.getElementById('key-features').value.trim();
+  const ctype    = document.getElementById('content-type').value;
+  const tone     = document.getElementById('tone').value;
+  const hook     = document.getElementById('hook').value;
+  const cta      = document.getElementById('cta').value;
+  if (!name && !features) {
+    const s = document.getElementById('gen-status'); s.className = 'status-line err'; s.textContent = 'Enter product name or features first'; return;
+  }
+  const btn = document.getElementById('gen-btn');
+  const statusEl = document.getElementById('gen-status');
+  const resultsEl = document.getElementById('results');
+  const emptyEl = document.getElementById('results-empty');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Generating...';
+  statusEl.className = 'status-line'; statusEl.innerHTML = '<span class="spinner"></span>Calling AI...';
+  resultsEl.innerHTML = ''; emptyEl.style.display = 'none';
+  const ctaMap = { 'WhatsApp': 'End with: "WhatsApp us to book — wa.me/91XXXXXXXXXX"', 'Call': 'End with: "Call us to book — +91-XXXXXXXXXX"', 'Link in bio': 'End with: "Book via link in bio."', 'Product page': 'End with: "Book at primesandzooms.com"' };
+  const prompt = `You are a professional social media copywriter for Primes & Zooms, a photo and cine gear rental business in Pune, India. Audience: photographers, videographers, DOPs, filmmakers.\n\nProduct: ${name || '(see features)'}\n${price ? 'Day rate: INR ' + price : ''}\nFeatures:\n${features || '(not provided)'}\n\nSettings:\n- Content type: ${ctype}\n- Tone: ${tone}\n- Hook style: ${hook}\n- CTA: ${ctaMap[cta] || cta}\n\nWrite 4 platform captions. Return ONLY valid JSON, no markdown fences:\n{"instagram":{"caption":"...","hashtags":"..."},"facebook":{"caption":"...","hashtags":"..."},"linkedin":{"caption":"...","hashtags":"..."},"telegram":{"caption":"..."}}\n\nRules:\n- Instagram: punchy hook, line breaks, 15-20 hashtags including #primesandzooms #pnzgear\n- Facebook: warmer, slightly longer, 5-8 hashtags\n- LinkedIn: professional, 2-3 paragraphs, 3-5 hashtags\n- Telegram: *bold* key specs, no hashtags, concise\n- No emojis except 1-2 in Telegram only`;
+  try {
+    const result = await callAI(prompt, 1200);
+    const clean = result.text.replace(/\`\`\`json|\`\`\`/g, '').trim();
+    const posts = JSON.parse(clean);
+    document.getElementById('model-used').textContent = result.provider;
+    const platforms = [['instagram','Instagram'],['facebook','Facebook'],['linkedin','LinkedIn'],['telegram','Telegram']];
+    resultsEl.innerHTML = platforms.map(([k, label]) => {
+      const d = posts[k]; if (!d) return '';
+      const full = (d.caption || '') + (d.hashtags ? '\n\n' + d.hashtags : '');
+      const id = 'card-' + k;
+      return `<div class="platform-card" id="${id}"><div class="platform-header"><span class="platform-name">${label}</span><button class="btn-copy" onclick="copyCard('${id}',this)">Copy</button></div><div class="caption-body">${esc(d.caption||'')}</div>${d.hashtags?`<div class="hashtag-body">${esc(d.hashtags)}</div>`:''}<div style="display:none" id="${id}-raw">${esc(full)}</div></div>`;
+    }).join('');
+    statusEl.className = 'status-line ok'; statusEl.textContent = 'Done via ' + result.provider;
+  } catch(e) {
+    statusEl.className = 'status-line err'; statusEl.textContent = 'Failed: ' + (e.message || 'error'); emptyEl.style.display = 'flex';
+  }
+  btn.disabled = false; btn.textContent = 'Generate all platforms';
+}
+function copyCard(id, btn) {
+  const text = document.getElementById(id + '-raw').textContent;
+  navigator.clipboard.writeText(text).then(() => { btn.textContent = 'Copied'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000); });
+}
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+async function callAI(prompt, maxTokens) {
+  const groq    = localStorage.getItem('pnz_groq') || '';
+  const mistral = localStorage.getItem('pnz_mistral') || '';
+  const gemini  = localStorage.getItem('pnz_gemini') || '';
+  if (groq) {
+    try {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+groq}, body: JSON.stringify({ model:'meta-llama/llama-4-scout-17b-16e-instruct', max_tokens:maxTokens, temperature:0.7, messages:[{role:'user',content:prompt}] }) });
+      if (res.ok) { const d = await res.json(); return { text: d.choices[0].message.content, provider: 'Groq / Llama 4 Scout' }; }
+    } catch(e) {}
+  }
+  if (mistral) {
+    try {
+      const res = await fetch('https://api.mistral.ai/v1/chat/completions', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+mistral}, body: JSON.stringify({ model:'mistral-small-latest', max_tokens:maxTokens, temperature:0.7, messages:[{role:'user',content:prompt}] }) });
+      if (res.ok) { const d = await res.json(); return { text: d.choices[0].message.content, provider: 'Mistral Small' }; }
+    } catch(e) {}
+  }
+  if (gemini) {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gemini}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], generationConfig:{maxOutputTokens:maxTokens,temperature:0.7} }) });
+      if (res.ok) { const d = await res.json(); return { text: d.candidates[0].content.parts[0].text, provider: 'Gemini Flash' }; }
+    } catch(e) {}
+  }
+  throw new Error('All providers failed or no keys set. Click "Configure keys" above.');
+}
+loadKeys();
+if (!localStorage.getItem('pnz_groq') && !localStorage.getItem('pnz_mistral') && !localStorage.getItem('pnz_gemini')) {
+  document.getElementById('config-panel').classList.add('open');
+}
+</script>
+</body>
+</html>
