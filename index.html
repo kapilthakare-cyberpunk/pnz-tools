@@ -142,7 +142,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 <script>
 // ── Notion DB IDs ─────────────────────────────────────────────
 const NOTION_DB = 'ed3e4a7d-0e0d-4ac1-bd2a-7f9f2de3ded0';
-const NOTION_PROXY = 'https://api.notion.com';
+// On localhost:8765 nginx proxies /notion-proxy/ → api.notion.com (no CORS)
+// On GitHub Pages NOTION_PROXY is null — Notion context is skipped gracefully
+const NOTION_PROXY = (location.hostname==='localhost'||location.hostname==='127.0.0.1'||location.hostname==='192.168.1.100')
+  ? '/notion-proxy'
+  : null;
 
 // Cached context from Notion
 let notionCtx = null;
@@ -181,11 +185,16 @@ async function loadNotionContext(){
   if(!token){ notionCtx = null; return; }
   const el = document.getElementById('ctx-status');
   const badge = document.getElementById('ctx-badge');
+  // CORS check — only works via local nginx proxy
+  if(NOTION_PROXY === null){
+    el.innerHTML='<span style="color:#fa0">Notion context only works on localhost:8765 (CORS). GitHub Pages uses AI defaults.</span>';
+    notionCtx = null; return;
+  }
   el.innerHTML='<span class="spin"></span>Loading Notion context...';
   badge.style.display='none';
   try {
     // Fetch last 12 posted captions (IG + FB) sorted by date desc
-    const res = await fetch('https://api.notion.com/v1/databases/'+NOTION_DB+'/query', {
+    const res = await fetch(NOTION_PROXY+'/v1/databases/'+NOTION_DB+'/query', {
       method:'POST',
       headers:{ 'Authorization':'Bearer '+token, 'Notion-Version':'2022-06-28', 'Content-Type':'application/json' },
       body: JSON.stringify({
