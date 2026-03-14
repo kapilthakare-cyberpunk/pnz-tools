@@ -7,150 +7,132 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0d0d0d;
-    --surface: #161616;
-    --surface2: #1e1e1e;
-    --border: #2a2a2a;
-    --border2: #333;
-    --text: #e8e8e8;
-    --muted: #888;
-    --accent: #c8ff00;
-    --accent-dim: #8aad00;
-    --danger: #ff4444;
-    --success: #22c55e;
-    --radius: 8px;
-    --font: 'DM Sans', sans-serif;
-    --mono: 'DM Mono', monospace;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; }
-  header { border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); z-index: 10; }
-  .logo { font-family: var(--mono); font-size: 13px; letter-spacing: .12em; color: var(--accent); text-transform: uppercase; }
-  .api-status { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); font-family: var(--mono); }
-  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); transition: background .3s; }
-  .dot.active { background: var(--accent); }
-  .layout { display: grid; grid-template-columns: 380px 1fr; min-height: calc(100vh - 53px); }
-  .panel-left { border-right: 1px solid var(--border); padding: 1.5rem; overflow-y: auto; max-height: calc(100vh - 53px); position: sticky; top: 53px; }
-  .panel-right { padding: 1.5rem; overflow-y: auto; }
-  .section-label { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; margin-bottom: .75rem; margin-top: 1.5rem; }
-  .section-label:first-child { margin-top: 0; }
-  label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 500; letter-spacing: .04em; }
-  input, select, textarea { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font); font-size: 13px; padding: 8px 10px; outline: none; transition: border-color .15s; appearance: none; -webkit-appearance: none; }
-  input:focus, select:focus, textarea:focus { border-color: var(--border2); }
-  input::placeholder, textarea::placeholder { color: #444; }
-  textarea { resize: vertical; line-height: 1.55; }
-  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; cursor: pointer; }
-  .field { margin-bottom: 10px; }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .url-row { display: flex; gap: 8px; }
-  .url-row input { flex: 1; font-family: var(--mono); font-size: 12px; }
-  .btn-fetch { padding: 8px 14px; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); color: var(--muted); font-family: var(--mono); font-size: 11px; letter-spacing: .06em; cursor: pointer; white-space: nowrap; transition: all .15s; }
-  .btn-fetch:hover { color: var(--text); border-color: #555; }
-  .fetch-preview { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.6; display: none; }
-  .fetch-preview strong { color: var(--text); font-weight: 500; }
-  .btn-generate { width: 100%; padding: 11px; background: var(--accent); border: none; border-radius: var(--radius); color: #0d0d0d; font-family: var(--mono); font-size: 12px; letter-spacing: .1em; font-weight: 500; cursor: pointer; text-transform: uppercase; margin-top: 1.25rem; transition: opacity .15s; }
-  .btn-generate:hover { opacity: .88; }
-  .btn-generate:disabled { opacity: .35; cursor: not-allowed; }
-  .status-line { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 8px; min-height: 16px; letter-spacing: .04em; }
-  .status-line.err { color: var(--danger); }
-  .status-line.ok { color: var(--success); }
-  .config-toggle { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; cursor: pointer; background: none; border: none; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
-  .config-toggle:hover { color: var(--text); }
-  .config-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-top: 8px; display: none; }
-  .config-panel.open { display: block; }
-  .provider-row { display: grid; grid-template-columns: 80px 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
-  .provider-label { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-  .results-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); font-family: var(--mono); font-size: 12px; letter-spacing: .08em; flex-direction: column; gap: 8px; min-height: 300px; }
-  .results-empty .arrow { font-size: 24px; color: var(--border2); }
-  .platform-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1rem; overflow: hidden; }
-  .platform-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface2); }
-  .platform-name { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-  .btn-copy { padding: 4px 10px; background: transparent; border: 1px solid var(--border2); border-radius: 4px; color: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: .06em; cursor: pointer; transition: all .15s; }
-  .btn-copy:hover { color: var(--accent); border-color: var(--accent); }
-  .btn-copy.copied { color: var(--success); border-color: var(--success); }
-  .caption-body { padding: 14px; font-size: 13px; line-height: 1.75; color: var(--text); white-space: pre-wrap; }
-  .hashtag-body { padding: 0 14px 14px; font-size: 12px; color: var(--accent-dim); font-family: var(--mono); line-height: 1.8; }
-  .spinner { display: inline-block; width: 10px; height: 10px; border: 1.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: 6px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @media (max-width: 768px) { .layout { grid-template-columns: 1fr; } .panel-left { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); } header { padding: 1rem; } }
+:root{--bg:#0d0d0d;--s:#161616;--s2:#1e1e1e;--b:#2a2a2a;--b2:#333;--t:#e8e8e8;--m:#888;--a:#c8ff00;--ad:#8aad00;--d:#ff4444;--ok:#22c55e;--r:8px;--f:'DM Sans',sans-serif;--mono:'DM Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--f);background:var(--bg);color:var(--t);min-height:100vh;font-size:14px;line-height:1.6}
+header{border-bottom:1px solid var(--b);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:10}
+.logo{font-family:var(--mono);font-size:13px;letter-spacing:.12em;color:var(--a);text-transform:uppercase}
+.hdr-right{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:11px;color:var(--m)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--b2);transition:background .3s;display:inline-block}
+.dot.on{background:var(--a)}.dot.notion{background:#4a90d9}
+.layout{display:grid;grid-template-columns:380px 1fr;min-height:calc(100vh - 53px)}
+.pl{border-right:1px solid var(--b);padding:1.5rem;overflow-y:auto;max-height:calc(100vh - 53px);position:sticky;top:53px}
+.pr{padding:1.5rem;overflow-y:auto}
+.sl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--m);text-transform:uppercase;margin:.75rem 0 .5rem}
+.sl:first-child{margin-top:0}
+label{display:block;font-size:11px;color:var(--m);margin-bottom:4px;font-weight:500;letter-spacing:.04em}
+input,select,textarea{width:100%;background:var(--s);border:1px solid var(--b);border-radius:var(--r);color:var(--t);font-family:var(--f);font-size:13px;padding:8px 10px;outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--b2)}
+input::placeholder,textarea::placeholder{color:#444}
+textarea{resize:vertical;line-height:1.55}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.field{margin-bottom:10px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.ur{display:flex;gap:8px}
+.ur input{flex:1;font-family:var(--mono);font-size:12px}
+.bsm{padding:8px 14px;background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);color:var(--m);font-family:var(--mono);font-size:11px;letter-spacing:.06em;cursor:pointer;white-space:nowrap;transition:all .15s}
+.bsm:hover{color:var(--t);border-color:#555}
+.prev{background:var(--s);border:1px solid var(--b);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--m);margin-top:6px;line-height:1.6;display:none}
+.prev strong{color:var(--t);font-weight:500}
+.bgen{width:100%;padding:11px;background:var(--a);border:none;border-radius:var(--r);color:#0d0d0d;font-family:var(--mono);font-size:12px;letter-spacing:.1em;font-weight:500;cursor:pointer;text-transform:uppercase;margin-top:1.25rem;transition:opacity .15s}
+.bgen:hover{opacity:.88}.bgen:disabled{opacity:.35;cursor:not-allowed}
+.st{font-family:var(--mono);font-size:11px;color:var(--m);margin-top:8px;min-height:16px;letter-spacing:.04em}
+.st.err{color:var(--d)}.st.ok{color:var(--ok)}
+.cfg-toggle{font-family:var(--mono);font-size:11px;color:var(--m);letter-spacing:.06em;cursor:pointer;background:none;border:none;padding:0;text-decoration:underline;text-underline-offset:3px}
+.cfg-toggle:hover{color:var(--t)}
+.cfg{background:var(--s);border:1px solid var(--b);border-radius:var(--r);padding:1rem;margin-top:8px;display:none}
+.cfg.open{display:block}
+.pr-row{display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:center;margin-bottom:8px}
+.pr-lbl{font-family:var(--mono);font-size:11px;color:var(--m)}
+.notion-status{display:flex;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);color:var(--m);margin-top:6px}
+.ctx-badge{font-size:10px;font-family:var(--mono);color:var(--ok);background:#0a2a14;border:1px solid #1a5a2a;border-radius:4px;padding:2px 7px;display:none}
+.empty{display:flex;align-items:center;justify-content:center;min-height:300px;color:var(--m);font-family:var(--mono);font-size:12px;flex-direction:column;gap:8px}
+.empty .arr{font-size:24px;color:var(--b2)}
+.card{background:var(--s);border:1px solid var(--b);border-radius:var(--r);margin-bottom:1rem;overflow:hidden}
+.chdr{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--b);background:var(--s2)}
+.pname{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--m)}
+.bcopy{padding:4px 10px;background:transparent;border:1px solid var(--b2);border-radius:4px;color:var(--m);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s}
+.bcopy:hover{color:var(--a);border-color:var(--a)}.bcopy.done{color:var(--ok);border-color:var(--ok)}
+.cap{padding:14px;font-size:13px;line-height:1.75;color:var(--t);white-space:pre-wrap}
+.tags{padding:0 14px 14px;font-size:12px;color:var(--ad);font-family:var(--mono);line-height:1.8}
+.spin{display:inline-block;width:10px;height:10px;border:1.5px solid var(--b2);border-top-color:var(--a);border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(max-width:768px){.layout{grid-template-columns:1fr}.pl{position:static;max-height:none;border-right:none;border-bottom:1px solid var(--b)}header{padding:1rem}}
 </style>
 </head>
 <body>
 <header>
   <span class="logo">PNZ / Post Generator</span>
-  <div class="api-status">
+  <div class="hdr-right">
     <span id="dot-groq" class="dot" title="Groq"></span>G
     <span id="dot-mistral" class="dot" title="Mistral"></span>M
     <span id="dot-gemini" class="dot" title="Gemini"></span>Ge
-    <span id="model-used" style="margin-left:4px;font-size:10px;color:#555;"></span>
+    <span id="dot-notion" class="dot notion" style="background:var(--b2)" title="Notion"></span>N
+    <span id="model-used" style="color:#555;margin-left:2px"></span>
   </div>
 </header>
+
 <div class="layout">
-  <div class="panel-left">
-    <div class="section-label">API Keys</div>
-    <button class="config-toggle" onclick="toggleConfig()">Configure keys</button>
-    <div id="config-panel" class="config-panel">
-      <div class="provider-row">
-        <span class="provider-label">Groq</span>
-        <input type="password" id="key-groq" placeholder="gsk_..." autocomplete="off" oninput="saveKeys()" />
-      </div>
-      <div class="provider-row">
-        <span class="provider-label">Mistral</span>
-        <input type="password" id="key-mistral" placeholder="..." autocomplete="off" oninput="saveKeys()" />
-      </div>
-      <div class="provider-row">
-        <span class="provider-label">Gemini</span>
-        <input type="password" id="key-gemini" placeholder="AIza..." autocomplete="off" oninput="saveKeys()" />
-      </div>
-      <div style="font-size:11px;color:#555;margin-top:8px;font-family:var(--mono);">Keys stored in your browser only.</div>
+  <div class="pl">
+    <div class="sl">API Keys</div>
+    <button class="cfg-toggle" onclick="toggleCfg()">Configure keys</button>
+    <div id="cfg" class="cfg">
+      <div class="pr-row"><span class="pr-lbl">Groq</span><input type="password" id="k-groq" placeholder="gsk_..." autocomplete="off" oninput="saveKeys()"/></div>
+      <div class="pr-row"><span class="pr-lbl">Mistral</span><input type="password" id="k-mistral" placeholder="..." autocomplete="off" oninput="saveKeys()"/></div>
+      <div class="pr-row"><span class="pr-lbl">Gemini</span><input type="password" id="k-gemini" placeholder="AIza..." autocomplete="off" oninput="saveKeys()"/></div>
+      <div class="pr-row"><span class="pr-lbl">Notion</span><input type="password" id="k-notion" placeholder="secret_..." autocomplete="off" oninput="saveKeys()"/></div>
+      <div style="font-size:11px;color:#555;margin-top:6px;font-family:var(--mono)">Keys saved in browser only. Notion key needed for style context.</div>
+    </div>
+    <div class="notion-status">
+      <span id="ctx-badge" class="ctx-badge">Notion context ready</span>
+      <span id="ctx-status"></span>
     </div>
 
-    <div class="section-label" style="margin-top:1.25rem;">Product URL</div>
+    <div class="sl" style="margin-top:1.25rem">Product URL</div>
     <div class="field">
-      <div class="url-row">
-        <input type="url" id="url-input" placeholder="https://primesandzooms.com/..." />
-        <button class="btn-fetch" onclick="fetchURL()" id="fetch-btn">Fetch</button>
+      <div class="ur">
+        <input type="url" id="url-input" placeholder="https://primesandzooms.com/..."/>
+        <button class="bsm" id="fetch-btn" onclick="fetchURL()">Fetch</button>
       </div>
-      <div id="fetch-status" class="status-line"></div>
-      <div id="fetch-preview" class="fetch-preview"></div>
+      <div id="fetch-st" class="st"></div>
+      <div id="fetch-prev" class="prev"></div>
     </div>
 
-    <div class="section-label">Product details</div>
-    <div class="row field">
-      <div><label>Product name</label><input type="text" id="product-name" placeholder="Godox V100S" /></div>
-      <div><label>Day rate (INR)</label><input type="number" id="price" placeholder="1200" /></div>
+    <div class="sl">Product details</div>
+    <div class="row">
+      <div><label>Product name</label><input type="text" id="p-name" placeholder="Godox V100S"/></div>
+      <div><label>Day rate (INR)</label><input type="number" id="p-price" placeholder="400"/></div>
     </div>
     <div class="field">
       <label>Key features / specs (one per line)</label>
-      <textarea id="key-features" rows="5" placeholder="TTL round-head flash&#10;200Ws output&#10;Sony E-mount compatible&#10;Built-in battery"></textarea>
+      <textarea id="p-features" rows="5" placeholder="TTL round-head flash&#10;200Ws output&#10;Sony E-mount&#10;Built-in battery&#10;Magnetic modifiers"></textarea>
     </div>
 
-    <div class="section-label">Post settings</div>
-    <div class="row field">
+    <div class="sl">Post settings</div>
+    <div class="row">
       <div><label>Content type</label>
-        <select id="content-type"><option>Promotional</option><option>Educational</option><option>Announcement</option><option>Informative</option></select>
+        <select id="s-ctype"><option>Promotional</option><option>Educational</option><option>Announcement</option><option>Informative</option></select>
       </div>
       <div><label>Tone</label>
-        <select id="tone"><option>Informative</option><option>Bold</option><option>Friendly</option><option>Professional</option></select>
+        <select id="s-tone"><option>Informative</option><option>Bold</option><option>Friendly</option><option>Professional</option></select>
       </div>
     </div>
-    <div class="row field">
+    <div class="row">
       <div><label>Hook style</label>
-        <select id="hook"><option>Statement</option><option>Question</option><option>CTA-led</option><option>Data / spec-led</option><option>Story</option></select>
+        <select id="s-hook"><option>Statement</option><option>Question</option><option>CTA-led</option><option>Data / spec-led</option><option>Story</option></select>
       </div>
       <div><label>Call to action</label>
-        <select id="cta"><option>WhatsApp</option><option>Call</option><option>Link in bio</option><option>Product page</option></select>
+        <select id="s-cta"><option>WhatsApp</option><option>Call</option><option>Link in bio</option><option>Product page</option></select>
       </div>
     </div>
 
-    <button class="btn-generate" id="gen-btn" onclick="generate()">Generate all platforms</button>
-    <div id="gen-status" class="status-line"></div>
+    <button class="bgen" id="gen-btn" onclick="generate()">Generate all platforms</button>
+    <div id="gen-st" class="st"></div>
   </div>
 
-  <div class="panel-right" id="panel-right">
-    <div class="results-empty" id="results-empty">
-      <span class="arrow">&#8592;</span>
+  <div class="pr">
+    <div class="empty" id="empty">
+      <span class="arr">&#8592;</span>
       <span>Fill in product details and generate</span>
     </div>
     <div id="results"></div>
@@ -158,125 +140,296 @@
 </div>
 
 <script>
-function loadKeys() {
-  document.getElementById('key-groq').value    = localStorage.getItem('pnz_groq') || '';
-  document.getElementById('key-mistral').value = localStorage.getItem('pnz_mistral') || '';
-  document.getElementById('key-gemini').value  = localStorage.getItem('pnz_gemini') || '';
+// ── Notion DB IDs ─────────────────────────────────────────────
+const NOTION_DB = 'ed3e4a7d-0e0d-4ac1-bd2a-7f9f2de3ded0';
+const NOTION_PROXY = 'https://api.notion.com';
+
+// Cached context from Notion
+let notionCtx = null;
+
+// ── Key management ────────────────────────────────────────────
+function loadKeys(){
+  ['groq','mistral','gemini','notion'].forEach(k=>{
+    document.getElementById('k-'+k).value = ls('pnz_'+k);
+  });
   updateDots();
+  if(ls('pnz_notion')) loadNotionContext();
+  if(!ls('pnz_groq')&&!ls('pnz_mistral')&&!ls('pnz_gemini')){
+    document.getElementById('cfg').classList.add('open');
+  }
 }
-function saveKeys() {
-  localStorage.setItem('pnz_groq',    document.getElementById('key-groq').value.trim());
-  localStorage.setItem('pnz_mistral', document.getElementById('key-mistral').value.trim());
-  localStorage.setItem('pnz_gemini',  document.getElementById('key-gemini').value.trim());
+function saveKeys(){
+  ['groq','mistral','gemini','notion'].forEach(k=>{
+    localStorage.setItem('pnz_'+k, document.getElementById('k-'+k).value.trim());
+  });
   updateDots();
+  if(ls('pnz_notion')) loadNotionContext();
 }
-function updateDots() {
-  ['groq','mistral','gemini'].forEach(p => {
-    document.getElementById('dot-'+p).className = 'dot ' + (localStorage.getItem('pnz_'+p) ? 'active' : '');
+function updateDots(){
+  ['groq','mistral','gemini'].forEach(p=>{
+    document.getElementById('dot-'+p).className='dot'+(ls('pnz_'+p)?' on':'');
+  });
+  const nd = document.getElementById('dot-notion');
+  nd.style.background = ls('pnz_notion') ? '#4a90d9' : 'var(--b2)';
+}
+function toggleCfg(){ document.getElementById('cfg').classList.toggle('open'); }
+function ls(k){ return localStorage.getItem(k)||''; }
+
+// ── Load Notion context ───────────────────────────────────────
+async function loadNotionContext(){
+  const token = ls('pnz_notion');
+  if(!token){ notionCtx = null; return; }
+  const el = document.getElementById('ctx-status');
+  const badge = document.getElementById('ctx-badge');
+  el.innerHTML='<span class="spin"></span>Loading Notion context...';
+  badge.style.display='none';
+  try {
+    // Fetch last 12 posted captions (IG + FB) sorted by date desc
+    const res = await fetch('https://api.notion.com/v1/databases/'+NOTION_DB+'/query', {
+      method:'POST',
+      headers:{ 'Authorization':'Bearer '+token, 'Notion-Version':'2022-06-28', 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        filter:{ and:[
+          { property:'Workflow', status:{ equals:'Posted' } },
+          { property:'IG Caption', rich_text:{ is_not_empty:true } }
+        ]},
+        sorts:[{ property:'Post date', direction:'descending' }],
+        page_size: 12
+      })
+    });
+    if(!res.ok) throw new Error('Notion API '+res.status);
+    const data = await res.json();
+
+    // Extract captions, hashtags, and "why it worked" notes
+    const examples = [];
+    const hashtagSet = new Set();
+
+    for(const page of data.results){
+      const p = page.properties;
+      const igCap = richText(p['IG Caption']);
+      const fbCap = richText(p['FB Caption']);
+      const why   = richText(p['Why it worked / didn\'t']);
+      const title = richText(p['Post']) || page.properties.Post?.title?.[0]?.plain_text || '';
+
+      // Collect hashtags from captions
+      const allText = igCap + ' ' + fbCap;
+      const tags = allText.match(/#\w+/g) || [];
+      tags.forEach(t => hashtagSet.add(t));
+
+      if(igCap || fbCap){
+        examples.push({ title, ig: igCap, fb: fbCap, why });
+      }
+    }
+
+    // Also fetch the master hashtag pool from the DB schema (the Hashtags property options)
+    // We already extracted them from captions above — combine with known core tags
+    const coreTags = ['#primesandzooms','#pnzgear','#punefilmcommunity','#punephotographers',
+      '#gearrental','#gearhire','#gearrentals','#CameraRental','#filmmaking',
+      '#PhotographyGear','#CinemaCamera','#GearOnRent','#Cinematography',
+      '#Pune','#Mumbai','#punecreators','#mumbaiproductions'];
+    coreTags.forEach(t=>hashtagSet.add(t));
+
+    notionCtx = {
+      examples: examples.slice(0,6), // top 6 most recent posted
+      hashtags: [...hashtagSet].slice(0, 60)
+    };
+
+    el.textContent = examples.length + ' posts loaded';
+    badge.style.display = 'inline';
+    document.getElementById('dot-notion').style.background='var(--ok)';
+  } catch(e) {
+    el.innerHTML='<span style="color:var(--d)">Notion load failed: '+e.message+'</span>';
+    notionCtx = null;
+  }
+}
+
+function richText(prop){
+  if(!prop) return '';
+  if(prop.type==='rich_text') return prop.rich_text?.map(r=>r.plain_text).join('')||'';
+  if(prop.type==='title') return prop.title?.map(r=>r.plain_text).join('')||'';
+  return '';
+}
+
+// ── URL Fetch ─────────────────────────────────────────────────
+async function fetchURL(){
+  const url = document.getElementById('url-input').value.trim();
+  if(!url) return;
+  const st  = document.getElementById('fetch-st');
+  const prv = document.getElementById('fetch-prev');
+  const btn = document.getElementById('fetch-btn');
+  btn.disabled=true; btn.textContent='...';
+  st.className='st'; st.innerHTML='<span class="spin"></span>Fetching...';
+  prv.style.display='none';
+  const prompt=`Extract product info from this URL and return ONLY JSON (no markdown):\nURL: ${url}\n{"product_name":"","price_per_day":"","key_features":[],"description":""}\n- price_per_day: INR rental day rate as number string\n- key_features: 4-6 short strings\n- If URL inaccessible, infer from the URL path`;
+  try{
+    const r=await callAI(prompt,400);
+    const parsed=JSON.parse(r.text.replace(/\`\`\`json|\`\`\`/g,'').trim());
+    if(parsed.product_name) document.getElementById('p-name').value=parsed.product_name;
+    if(parsed.price_per_day) document.getElementById('p-price').value=parsed.price_per_day.replace(/[^\d]/g,'');
+    if(parsed.key_features?.length) document.getElementById('p-features').value=parsed.key_features.join('\n');
+    prv.style.display='block';
+    prv.innerHTML='<strong>'+esc(parsed.product_name||'Product')+'</strong><br>'+esc(parsed.description||'');
+    st.className='st ok'; st.textContent='Loaded via '+r.provider;
+  }catch(e){
+    st.className='st err'; st.textContent='Fetch failed — fill details manually';
+  }
+  btn.disabled=false; btn.textContent='Fetch';
+}
+
+// ── Generate Posts ────────────────────────────────────────────
+async function generate(){
+  const name     = document.getElementById('p-name').value.trim();
+  const price    = document.getElementById('p-price').value.trim();
+  const features = document.getElementById('p-features').value.trim();
+  const ctype    = document.getElementById('s-ctype').value;
+  const tone     = document.getElementById('s-tone').value;
+  const hook     = document.getElementById('s-hook').value;
+  const cta      = document.getElementById('s-cta').value;
+
+  if(!name&&!features){
+    const s=document.getElementById('gen-st'); s.className='st err';
+    s.textContent='Enter product name or features first'; return;
+  }
+
+  const btn=document.getElementById('gen-btn');
+  const genSt=document.getElementById('gen-st');
+  const resEl=document.getElementById('results');
+  const emptyEl=document.getElementById('empty');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>Generating...';
+  genSt.className='st'; resEl.innerHTML=''; emptyEl.style.display='none';
+
+  // ── Build Notion context section ──────────────────────────
+  let ctxSection = '';
+  if(notionCtx && notionCtx.examples.length > 0){
+    genSt.innerHTML='<span class="spin"></span>Loading brand context from Notion...';
+    const exStr = notionCtx.examples.map((e,i)=>
+      `Example ${i+1} — "${e.title}"\nIG: ${e.ig.substring(0,300)}${e.ig.length>300?'...':''}\n${e.why?'Why it worked: '+e.why:''}`
+    ).join('\n\n');
+    const hashStr = notionCtx.hashtags.join(' ');
+    ctxSection = `
+BRAND VOICE — Learn from these real PNZ posts and match the style exactly:
+${exStr}
+
+APPROVED HASHTAG POOL (only use hashtags from this list — do not invent new ones):
+${hashStr}
+`;
+  } else {
+    ctxSection = `
+APPROVED HASHTAGS (use only these, do not invent new ones):
+#primesandzooms #pnzgear #punefilmcommunity #punephotographers #gearrental #gearhire #gearrentals
+#CameraRental #filmmaking #PhotographyGear #CinemaCamera #GearOnRent #Cinematography
+#Pune #Mumbai #punecreators #FlashPhotography #LightingTips #WeddingPhotography #DocumentaryFilmmaking
+#HybridShooter #ContentCreators #CinematicStills #ProfessionalGear #RAWVideo #CommercialVideo
+`;
+  }
+
+  const ctaMap={
+    'WhatsApp':    'WhatsApp us to book: +91 9503275757',
+    'Call':        'Call us to book: +91 9503275757',
+    'Link in bio': 'Book via link in bio.',
+    'Product page':'Book at primesandzooms.com'
+  };
+
+  genSt.innerHTML='<span class="spin"></span>Generating captions...';
+
+  const prompt=`You are the social media voice of Primes & Zooms, a photo and cine gear rental business in Pune, India.
+${ctxSection}
+
+NOW WRITE NEW CAPTIONS FOR:
+Product: ${name||'(see features)'}
+${price?'Day rate: Rs. '+price+'/day':''}
+Features:
+${features||'(not provided)'}
+
+Settings: content type ${ctype}, tone ${tone}, hook style ${hook}
+CTA line to include: "${ctaMap[cta]||cta}"
+
+Match the brand voice from the examples exactly. Return ONLY valid JSON, no markdown:
+{"instagram":{"caption":"...","hashtags":"..."},"facebook":{"caption":"...","hashtags":"..."},"linkedin":{"caption":"...","hashtags":"..."},"telegram":{"caption":"..."}}
+
+Platform rules:
+- Instagram: match exact formatting style of examples (◽ bullets, line breaks, clean CTA), 8-15 hashtags from approved pool only
+- Facebook: slightly warmer/longer than IG, 4-6 hashtags from approved pool
+- LinkedIn: professional tone, 2-3 short paragraphs, 3-5 hashtags, no bullet symbols
+- Telegram: *bold* key specs using asterisks, price and CTA, no hashtags
+- Price format: "Rs. ${price||'XXX'}/day" or "1-day rent: Rs. ${price||'XXX'}"
+- No emojis except Telegram (max 1-2)
+- Do NOT invent hashtags not in the approved pool`;
+
+  try{
+    const r=await callAI(prompt,1400);
+    const posts=JSON.parse(r.text.replace(/\`\`\`json|\`\`\`/g,'').trim());
+    document.getElementById('model-used').textContent=r.provider+(notionCtx?'+Notion':'');
+
+    const platforms=[['instagram','Instagram'],['facebook','Facebook'],['linkedin','LinkedIn'],['telegram','Telegram']];
+    resEl.innerHTML=platforms.map(([k,label])=>{
+      const d=posts[k]; if(!d) return '';
+      const full=(d.caption||'')+(d.hashtags?'\n\n'+d.hashtags:'');
+      const id='c'+k;
+      return `<div class="card" id="${id}">
+        <div class="chdr">
+          <span class="pname">${label}</span>
+          <button class="bcopy" onclick="cpy('${id}',this)">Copy</button>
+        </div>
+        <div class="cap">${esc(d.caption||'')}</div>
+        ${d.hashtags?`<div class="tags">${esc(d.hashtags)}</div>`:''}
+        <div style="display:none" id="${id}-raw">${esc(full)}</div>
+      </div>`;
+    }).join('');
+
+    genSt.className='st ok';
+    genSt.textContent='Done via '+r.provider+(notionCtx?' + Notion brand context':'');
+  }catch(e){
+    genSt.className='st err';
+    genSt.textContent='Failed: '+(e.message||'error');
+    emptyEl.style.display='flex';
+  }
+  btn.disabled=false; btn.textContent='Generate all platforms';
+}
+
+function cpy(id,btn){
+  const t=document.getElementById(id+'-raw').textContent;
+  navigator.clipboard.writeText(t).then(()=>{
+    btn.textContent='Copied'; btn.classList.add('done');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('done')},2000);
   });
 }
-function toggleConfig() {
-  document.getElementById('config-panel').classList.toggle('open');
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+
+// ── AI Fallback Chain ─────────────────────────────────────────
+async function callAI(prompt,maxTokens){
+  const g=ls('pnz_groq'), m=ls('pnz_mistral'), ge=ls('pnz_gemini');
+  if(g){
+    try{
+      const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+        method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+g},
+        body:JSON.stringify({model:'meta-llama/llama-4-scout-17b-16e-instruct',max_tokens:maxTokens,temperature:0.7,messages:[{role:'user',content:prompt}]})
+      });
+      if(r.ok){const d=await r.json();return{text:d.choices[0].message.content,provider:'Groq/Llama4'};}
+    }catch(e){}
+  }
+  if(m){
+    try{
+      const r=await fetch('https://api.mistral.ai/v1/chat/completions',{
+        method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+m},
+        body:JSON.stringify({model:'mistral-small-latest',max_tokens:maxTokens,temperature:0.7,messages:[{role:'user',content:prompt}]})
+      });
+      if(r.ok){const d=await r.json();return{text:d.choices[0].message.content,provider:'Mistral'};}
+    }catch(e){}
+  }
+  if(ge){
+    try{
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${ge}`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:maxTokens,temperature:0.7}})
+      });
+      if(r.ok){const d=await r.json();return{text:d.candidates[0].content.parts[0].text,provider:'Gemini'};}
+    }catch(e){}
+  }
+  throw new Error('All providers failed. Check keys in Configure keys.');
 }
-async function fetchURL() {
-  const url = document.getElementById('url-input').value.trim();
-  if (!url) return;
-  const statusEl = document.getElementById('fetch-status');
-  const previewEl = document.getElementById('fetch-preview');
-  const btn = document.getElementById('fetch-btn');
-  btn.disabled = true; btn.textContent = '...';
-  statusEl.className = 'status-line';
-  statusEl.innerHTML = '<span class="spinner"></span>Fetching...';
-  previewEl.style.display = 'none';
-  const prompt = `Extract product information from this URL and return ONLY a JSON object with no other text:\nURL: ${url}\n\n{"product_name":"","price_per_day":"","key_features":[],"description":"","category":""}\n\n- price_per_day: rental day rate in INR as number string, empty if not found\n- key_features: array of 4-6 key specs as short strings\n- description: 1-2 sentences\n- If URL inaccessible, infer from URL path`;
-  try {
-    const result = await callAI(prompt, 400);
-    const clean = result.text.replace(/\`\`\`json|\`\`\`/g, '').trim();
-    const parsed = JSON.parse(clean);
-    if (parsed.product_name) document.getElementById('product-name').value = parsed.product_name;
-    if (parsed.price_per_day) document.getElementById('price').value = parsed.price_per_day.replace(/[^\d]/g, '');
-    if (parsed.key_features?.length) document.getElementById('key-features').value = parsed.key_features.join('\n');
-    previewEl.style.display = 'block';
-    previewEl.innerHTML = '<strong>' + esc(parsed.product_name || 'Product') + '</strong><br>' + esc(parsed.description || '');
-    statusEl.className = 'status-line ok';
-    statusEl.textContent = 'Loaded via ' + result.provider;
-  } catch(e) {
-    statusEl.className = 'status-line err';
-    statusEl.textContent = 'Fetch failed — fill details manually';
-  }
-  btn.disabled = false; btn.textContent = 'Fetch';
-}
-async function generate() {
-  const name     = document.getElementById('product-name').value.trim();
-  const price    = document.getElementById('price').value.trim();
-  const features = document.getElementById('key-features').value.trim();
-  const ctype    = document.getElementById('content-type').value;
-  const tone     = document.getElementById('tone').value;
-  const hook     = document.getElementById('hook').value;
-  const cta      = document.getElementById('cta').value;
-  if (!name && !features) {
-    const s = document.getElementById('gen-status'); s.className = 'status-line err'; s.textContent = 'Enter product name or features first'; return;
-  }
-  const btn = document.getElementById('gen-btn');
-  const statusEl = document.getElementById('gen-status');
-  const resultsEl = document.getElementById('results');
-  const emptyEl = document.getElementById('results-empty');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Generating...';
-  statusEl.className = 'status-line'; statusEl.innerHTML = '<span class="spinner"></span>Calling AI...';
-  resultsEl.innerHTML = ''; emptyEl.style.display = 'none';
-  const ctaMap = { 'WhatsApp': 'End with: "WhatsApp us to book — wa.me/91XXXXXXXXXX"', 'Call': 'End with: "Call us to book — +91-XXXXXXXXXX"', 'Link in bio': 'End with: "Book via link in bio."', 'Product page': 'End with: "Book at primesandzooms.com"' };
-  const prompt = `You are a professional social media copywriter for Primes & Zooms, a photo and cine gear rental business in Pune, India. Audience: photographers, videographers, DOPs, filmmakers.\n\nProduct: ${name || '(see features)'}\n${price ? 'Day rate: INR ' + price : ''}\nFeatures:\n${features || '(not provided)'}\n\nSettings:\n- Content type: ${ctype}\n- Tone: ${tone}\n- Hook style: ${hook}\n- CTA: ${ctaMap[cta] || cta}\n\nWrite 4 platform captions. Return ONLY valid JSON, no markdown fences:\n{"instagram":{"caption":"...","hashtags":"..."},"facebook":{"caption":"...","hashtags":"..."},"linkedin":{"caption":"...","hashtags":"..."},"telegram":{"caption":"..."}}\n\nRules:\n- Instagram: punchy hook, line breaks, 15-20 hashtags including #primesandzooms #pnzgear\n- Facebook: warmer, slightly longer, 5-8 hashtags\n- LinkedIn: professional, 2-3 paragraphs, 3-5 hashtags\n- Telegram: *bold* key specs, no hashtags, concise\n- No emojis except 1-2 in Telegram only`;
-  try {
-    const result = await callAI(prompt, 1200);
-    const clean = result.text.replace(/\`\`\`json|\`\`\`/g, '').trim();
-    const posts = JSON.parse(clean);
-    document.getElementById('model-used').textContent = result.provider;
-    const platforms = [['instagram','Instagram'],['facebook','Facebook'],['linkedin','LinkedIn'],['telegram','Telegram']];
-    resultsEl.innerHTML = platforms.map(([k, label]) => {
-      const d = posts[k]; if (!d) return '';
-      const full = (d.caption || '') + (d.hashtags ? '\n\n' + d.hashtags : '');
-      const id = 'card-' + k;
-      return `<div class="platform-card" id="${id}"><div class="platform-header"><span class="platform-name">${label}</span><button class="btn-copy" onclick="copyCard('${id}',this)">Copy</button></div><div class="caption-body">${esc(d.caption||'')}</div>${d.hashtags?`<div class="hashtag-body">${esc(d.hashtags)}</div>`:''}<div style="display:none" id="${id}-raw">${esc(full)}</div></div>`;
-    }).join('');
-    statusEl.className = 'status-line ok'; statusEl.textContent = 'Done via ' + result.provider;
-  } catch(e) {
-    statusEl.className = 'status-line err'; statusEl.textContent = 'Failed: ' + (e.message || 'error'); emptyEl.style.display = 'flex';
-  }
-  btn.disabled = false; btn.textContent = 'Generate all platforms';
-}
-function copyCard(id, btn) {
-  const text = document.getElementById(id + '-raw').textContent;
-  navigator.clipboard.writeText(text).then(() => { btn.textContent = 'Copied'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000); });
-}
-function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
-async function callAI(prompt, maxTokens) {
-  const groq    = localStorage.getItem('pnz_groq') || '';
-  const mistral = localStorage.getItem('pnz_mistral') || '';
-  const gemini  = localStorage.getItem('pnz_gemini') || '';
-  if (groq) {
-    try {
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+groq}, body: JSON.stringify({ model:'meta-llama/llama-4-scout-17b-16e-instruct', max_tokens:maxTokens, temperature:0.7, messages:[{role:'user',content:prompt}] }) });
-      if (res.ok) { const d = await res.json(); return { text: d.choices[0].message.content, provider: 'Groq / Llama 4 Scout' }; }
-    } catch(e) {}
-  }
-  if (mistral) {
-    try {
-      const res = await fetch('https://api.mistral.ai/v1/chat/completions', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+mistral}, body: JSON.stringify({ model:'mistral-small-latest', max_tokens:maxTokens, temperature:0.7, messages:[{role:'user',content:prompt}] }) });
-      if (res.ok) { const d = await res.json(); return { text: d.choices[0].message.content, provider: 'Mistral Small' }; }
-    } catch(e) {}
-  }
-  if (gemini) {
-    try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${gemini}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], generationConfig:{maxOutputTokens:maxTokens,temperature:0.7} }) });
-      if (res.ok) { const d = await res.json(); return { text: d.candidates[0].content.parts[0].text, provider: 'Gemini Flash' }; }
-    } catch(e) {}
-  }
-  throw new Error('All providers failed or no keys set. Click "Configure keys" above.');
-}
+
 loadKeys();
-if (!localStorage.getItem('pnz_groq') && !localStorage.getItem('pnz_mistral') && !localStorage.getItem('pnz_gemini')) {
-  document.getElementById('config-panel').classList.add('open');
-}
 </script>
 </body>
 </html>
